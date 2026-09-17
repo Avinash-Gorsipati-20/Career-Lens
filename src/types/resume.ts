@@ -68,6 +68,8 @@ export interface Achievement {
   date?: string;
 }
 
+export type LeadershipActivity = Achievement;
+
 export interface Language {
   id: string;
   name: string;
@@ -95,6 +97,7 @@ export interface ResumeData {
   projects: Project[];
   certifications: Certification[];
   achievements: Achievement[];
+  leadershipActivities: LeadershipActivity[];
   languages: Language[];
   interests: Interest[];
   updatedAt?: string;

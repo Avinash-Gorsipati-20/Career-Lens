@@ -10,8 +10,9 @@ import { CertificationsForm } from './CertificationsForm';
 import { AchievementsForm } from './AchievementsForm';
 import { LanguagesForm } from './LanguagesForm';
 import { InterestsForm } from './InterestsForm';
+import { LeadershipActivitiesForm } from './LeadershipActivitiesForm';
 import { Card } from '../ui/Card';
-import { User, FileText, GraduationCap, Code, Briefcase, FolderGit2, Award, Trophy, Languages, Heart, CheckCircle2 } from 'lucide-react';
+import { User, FileText, GraduationCap, Code, Briefcase, FolderGit2, Award, Trophy, Languages, Heart, Users, CheckCircle2 } from 'lucide-react';
 
 interface ResumeFormProps {
   resumeData: ResumeData;
@@ -51,6 +52,7 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({
     { id: 'projects', label: 'Projects', icon: <FolderGit2 size={16} />, count: resumeData.projects.length, isComplete: resumeData.projects.length > 0 },
     { id: 'certifications', label: 'Certifications', icon: <Award size={16} />, count: resumeData.certifications.length, isComplete: resumeData.certifications.length > 0 },
     { id: 'achievements', label: 'Achievements', icon: <Trophy size={16} />, count: resumeData.achievements.length, isComplete: resumeData.achievements.length > 0 },
+    { id: 'leadershipActivities', label: 'Leadership & Activities', icon: <Users size={16} />, count: resumeData.leadershipActivities.length, isComplete: resumeData.leadershipActivities.length > 0 },
     { id: 'languages', label: 'Languages', icon: <Languages size={16} />, count: resumeData.languages.length, isComplete: resumeData.languages.length > 0 },
     { id: 'interests', label: 'Interests', icon: <Heart size={16} />, count: resumeData.interests.length, isComplete: resumeData.interests.length > 0 },
   ];
@@ -164,6 +166,15 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({
             onAdd={ach => addItem('achievements', ach)}
             onUpdate={(id, fields) => updateItem('achievements', id, fields)}
             onRemove={id => removeItem('achievements', id)}
+          />
+        )}
+
+        {activeTab === 'leadershipActivities' && (
+          <LeadershipActivitiesForm
+            activities={resumeData.leadershipActivities}
+            onAdd={activity => addItem('leadershipActivities', activity)}
+            onUpdate={(id, fields) => updateItem('leadershipActivities', id, fields)}
+            onRemove={id => removeItem('leadershipActivities', id)}
           />
         )}
 

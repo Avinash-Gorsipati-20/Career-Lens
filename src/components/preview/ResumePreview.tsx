@@ -115,6 +115,24 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({ data, templateId }
         >
           <div id="resume-preview-document" className="relative w-[210mm] min-h-[297mm] transition-all duration-200">
             {renderTemplate()}
+            {data.leadershipActivities?.length > 0 && (
+              <section className="bg-white text-slate-800 p-8 text-[12px] leading-normal print:p-0">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-blue-700 border-b border-slate-200 pb-1 mb-3">
+                  Leadership &amp; Activities
+                </h2>
+                <div className="space-y-2">
+                  {data.leadershipActivities.map(activity => (
+                    <div key={activity.id}>
+                      <div className="flex justify-between gap-4">
+                        <h3 className="font-semibold text-slate-900">{activity.title}</h3>
+                        {activity.date && <span className="text-[10px] text-slate-500">{activity.date}</span>}
+                      </div>
+                      {activity.description && <p className="text-[11px] text-slate-600 leading-relaxed">{activity.description}</p>}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         </div>
       </div>

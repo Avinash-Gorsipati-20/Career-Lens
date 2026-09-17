@@ -1,4 +1,4 @@
-import { ResumeData, Education, Experience, Project, Skill } from '../types/resume';
+import { ResumeData, Education, Experience, Project, Skill, Certification, Achievement, Language, Interest } from '../types/resume';
 
 export interface ParseResult {
   parsedData: ResumeData;
@@ -20,6 +20,7 @@ export const parseResumeText = (text: string): ParseResult => {
     projects: [],
     certifications: [],
     achievements: [],
+    leadershipActivities: [],
     languages: [],
     interests: []
   };
@@ -71,11 +72,32 @@ export const parseResumeText = (text: string): ParseResult => {
   const skillsList: string[] = [];
   const expList: Experience[] = [];
   const eduList: Education[] = [];
+  const projectList: Project[] = [];
+  const certificationList: Certification[] = [];
+  const achievementList: Achievement[] = [];
+  const leadershipList: Achievement[] = [];
+  const languageList: Language[] = [];
+  const interestList: Interest[] = [];
 
   lines.forEach((line, index) => {
     const lower = line.toLowerCase();
     
-    if (lower.includes('experience') || lower.includes('work history') || lower.includes('employment')) {
+    if (lower.includes('leadership') || lower.includes('activities') || lower.includes('volunteer') || lower.includes('extracurricular')) {
+      currentSection = 'leadership';
+      return;
+    } else if (lower.includes('certification') || lower.includes('certificate')) {
+      currentSection = 'certifications';
+      return;
+    } else if (lower.includes('achievement') || lower.includes('award') || lower.includes('honor')) {
+      currentSection = 'achievements';
+      return;
+    } else if (lower.includes('language')) {
+      currentSection = 'languages';
+      return;
+    } else if (lower.includes('interest') || lower.includes('hobbies')) {
+      currentSection = 'interests';
+      return;
+    } else if (lower.includes('experience') || lower.includes('work history') || lower.includes('employment')) {
       currentSection = 'experience';
       return;
     } else if (lower.includes('education') || lower.includes('academic')) {
@@ -109,6 +131,25 @@ export const parseResumeText = (text: string): ParseResult => {
           description: line
         });
       }
+    } else if (currentSection === 'projects' && line.length > 4) {
+      projectList.push({
+        id: `project-${Date.now()}-${index}`,
+        name: line.split(/[-:|]/)[0].trim(),
+        description: line,
+        technologies: line.match(/\b(React|Angular|Vue|Node\.js|Python|Java|TypeScript|JavaScript|SQL|AWS|Docker|Firebase|MongoDB|PostgreSQL|TensorFlow|PyTorch)\b/gi) || [],
+        githubLink: '',
+        liveDemo: ''
+      });
+    } else if (currentSection === 'certifications' && line.length > 4) {
+      certificationList.push({ id: `cert-${Date.now()}-${index}`, title: line, issuer: '', date: '' });
+    } else if (currentSection === 'achievements' && line.length > 4) {
+      achievementList.push({ id: `ach-${Date.now()}-${index}`, title: line, description: '', date: '' });
+    } else if (currentSection === 'leadership' && line.length > 4) {
+      leadershipList.push({ id: `lead-${Date.now()}-${index}`, title: line, description: '', date: '' });
+    } else if (currentSection === 'languages' && line.length > 1) {
+      languageList.push({ id: `lang-${Date.now()}-${index}`, name: line, proficiency: 'Professional' });
+    } else if (currentSection === 'interests' && line.length > 1) {
+      interestList.push({ id: `interest-${Date.now()}-${index}`, name: line });
     } else if (currentSection === 'education' && line.length > 5) {
       if (line.includes('University') || line.includes('College') || line.includes('Institute') || line.includes('Bachelor') || line.includes('Master') || line.includes('B.S.') || line.includes('B.Tech')) {
         eduList.push({
@@ -135,6 +176,12 @@ export const parseResumeText = (text: string): ParseResult => {
 
   if (expList.length > 0) parsedData.experience = expList.slice(0, 4);
   if (eduList.length > 0) parsedData.education = eduList.slice(0, 3);
+  if (projectList.length > 0) parsedData.projects = projectList.slice(0, 8);
+  if (certificationList.length > 0) parsedData.certifications = certificationList.slice(0, 8);
+  if (achievementList.length > 0) parsedData.achievements = achievementList.slice(0, 8);
+  if (leadershipList.length > 0) parsedData.leadershipActivities = leadershipList.slice(0, 8);
+  if (languageList.length > 0) parsedData.languages = languageList.slice(0, 8);
+  if (interestList.length > 0) parsedData.interests = interestList.slice(0, 8);
 
   const confidenceScore = Math.min(85, 40 + (parsedData.personal.email ? 15 : 0) + (parsedData.skills.length * 2) + (parsedData.experience.length * 10));
 

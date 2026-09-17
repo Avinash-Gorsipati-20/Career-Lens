@@ -105,6 +105,7 @@ export const ResumeImportModal: React.FC<ResumeImportModalProps> = ({
           projects: [],
           certifications: [],
           achievements: [],
+          leadershipActivities: [],
           languages: [],
           interests: []
         },

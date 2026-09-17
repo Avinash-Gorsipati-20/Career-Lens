@@ -8,6 +8,7 @@ const createEmptyResumeData = (): ResumeData => ({
   projects: [],
   certifications: [],
   achievements: [],
+  leadershipActivities: [],
   languages: [],
   interests: []
 });
@@ -20,7 +21,8 @@ export const storageService = {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored) as Partial<ResumeData>;
+        return { ...createEmptyResumeData(), ...parsed, leadershipActivities: parsed.leadershipActivities || [] };
       }
     } catch (err) {
       console.error('Failed to load resume data from LocalStorage:', err);

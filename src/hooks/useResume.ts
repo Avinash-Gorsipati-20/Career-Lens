@@ -70,6 +70,7 @@ export const useResume = () => {
       projects: [],
       certifications: [],
       achievements: [],
+      leadershipActivities: [],
       languages: [],
       interests: []
     };
@@ -81,7 +82,7 @@ export const useResume = () => {
     try {
       const parsed = JSON.parse(jsonString);
       if (parsed && parsed.personal && Array.isArray(parsed.skills)) {
-        setResumeData(parsed as ResumeData);
+        setResumeData({ ...(parsed as ResumeData), leadershipActivities: parsed.leadershipActivities || [] });
         return { success: true };
       }
       return { success: false, error: 'Invalid resume data structure' };
@@ -93,7 +94,7 @@ export const useResume = () => {
   const validationErrors = validateResumeData(resumeData);
 
   const replaceResumeData = useCallback((data: ResumeData) => {
-    setResumeData(data);
+    setResumeData({ ...data, leadershipActivities: data.leadershipActivities || [] });
   }, []);
 
   return {
