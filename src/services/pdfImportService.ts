@@ -25,12 +25,17 @@ const fileToUint8Array = (file: File): Promise<Uint8Array> => {
   });
 };
 
+const loadPdf = (data: Uint8Array): Promise<pdfjsLib.PDFDocumentProxy> => {
+  // pdf.js may transfer the supplied buffer to its worker, so never reuse it directly.
+  return pdfjsLib.getDocument({ data: data.slice() }).promise;
+};
+
 const extractTextFromPdf = async (
   data: Uint8Array,
   onProgress?: ExtractProgressCallback
 ): Promise<string> => {
   onProgress?.(5, 'Loading PDF document');
-  const pdf = await pdfjsLib.getDocument({ data }).promise;
+  const pdf = await loadPdf(data);
   const numPages = pdf.numPages;
   const pageTexts: string[] = [];
 
@@ -65,7 +70,7 @@ const extractTextWithOcr = async (
   onProgress?: ExtractProgressCallback
 ): Promise<string> => {
   onProgress?.(5, 'Loading PDF for OCR analysis');
-  const pdf = await pdfjsLib.getDocument({ data }).promise;
+  const pdf = await loadPdf(data);
   const numPages = pdf.numPages;
   const pageTexts: string[] = [];
 
@@ -134,7 +139,7 @@ export const extractTextFromPdfFile = async (
   onProgress?.(100, 'Done');
   return {
     text: extractedText,
-    numPages: await pdfjsLib.getDocument({ data }).promise.then(pdf => pdf.numPages),
+    numPages: await loadPdf(data).then(pdf => pdf.numPages),
     usedOcr,
     ocrProgress,
     warnings
