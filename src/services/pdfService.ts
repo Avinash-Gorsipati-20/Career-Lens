@@ -29,12 +29,14 @@ export const pdfService = {
       });
 
       const imgData = canvas.toDataURL('image/jpeg', 0.98);
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      const contentRatio = canvas.height / canvas.width;
+      const maxWidth = 297;
+      const maxHeight = 420;
+      const pageWidth = Math.min(maxWidth, Math.max(210, maxHeight / contentRatio));
+      const pageHeight = Math.min(maxHeight, pageWidth * contentRatio);
+      const pdf = new jsPDF(pageHeight >= pageWidth ? 'p' : 'l', 'mm', [pageWidth, pageHeight]);
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-
-      // Keep the rendered A4 width and paginate the natural document height.
-      // Scaling the complete canvas into one page makes longer templates unreadable.
       const renderedHeight = (canvas.height * pdfWidth) / canvas.width;
       const pageCount = Math.max(1, Math.ceil(renderedHeight / pdfHeight));
       for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {

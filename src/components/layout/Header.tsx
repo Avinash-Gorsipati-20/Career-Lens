@@ -111,7 +111,7 @@ export const Header: React.FC<HeaderProps> = ({
                 activeTab === 'portfolio' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
               }`}
             >
-              <Globe size={14} /> Portfolio (300+)
+              <Globe size={14} /> Portfolio
             </button>
 
             <button

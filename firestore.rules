@@ -34,5 +34,13 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'content', 'updatedAt']);
       allow delete: if signedIn() && resource.data.userId == request.auth.uid;
     }
+
+    match /publicPortfolios/{slug} {
+      allow read: if true;
+      allow create, update: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.keys().hasOnly(['userId', 'username', 'content', 'updatedAt']);
+      allow delete: if signedIn() && resource.data.userId == request.auth.uid;
+    }
   }
 }

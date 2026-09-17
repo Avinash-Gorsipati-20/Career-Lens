@@ -1,19 +1,32 @@
 import React, { useEffect, useState } from 'react';
 import { ResumeData, Project } from '../../types/resume';
 import { PortfolioTemplateId, PortfolioThemeId } from '../../types/portfolio';
-import { PORTFOLIO_TEMPLATES, PORTFOLIO_THEMES, getPortfolioTemplate, getPortfolioTheme } from '../../services/portfolioService';
+import { PORTFOLIO_TEMPLATES, PORTFOLIO_THEMES, getPortfolioTemplate, getPortfolioTheme, getPortfolioSlug } from '../../services/portfolioService';
 import { ProjectDetailModal } from './ProjectDetailModal';
 import { Layout, Palette, Share2, Download, Copy, Check, Save, ExternalLink, Sparkles, Code, Briefcase, GraduationCap, Github, Linkedin, Mail, Phone, MapPin, Terminal, Award, ArrowUpRight, ShieldCheck, Layers, BookOpen, Activity, FileText, Cpu, BarChart3, Database, UserCheck, QrCode, Smartphone, Globe } from 'lucide-react';
 
 interface PortfolioEngineProps {
   data: ResumeData;
-  onDownloadPdf?: () => void;
+  onDownloadPdf?: (elementId?: string) => void;
   initialTemplateId?: PortfolioTemplateId;
   initialThemeId?: PortfolioThemeId;
   onSettingsChange?: (settings: { templateId: PortfolioTemplateId; themeId: PortfolioThemeId }) => void;
   onSave?: () => void;
   onSaveAs?: () => void;
+  publicView?: boolean;
 }
+
+const PortfolioDataSection: React.FC<{
+  title: string;
+  icon: React.ReactNode;
+  theme: ReturnType<typeof getPortfolioTheme>;
+  children: React.ReactNode;
+}> = ({ title, icon, theme, children }) => (
+  <section className={`p-6 rounded-2xl border space-y-4 ${theme.cardClass} ${theme.borderClass}`}>
+    <h2 className={`text-xl font-bold flex items-center gap-3 ${theme.accentClass}`}>{icon}{title}</h2>
+    <div className="space-y-3 text-sm">{children}</div>
+  </section>
+);
 
 export const PortfolioEngine: React.FC<PortfolioEngineProps> = ({
   data,
@@ -23,6 +36,7 @@ export const PortfolioEngine: React.FC<PortfolioEngineProps> = ({
   onSettingsChange,
   onSave,
   onSaveAs
+  ,publicView = false
 }) => {
   const [selectedTemplateId, setSelectedTemplateId] = useState<PortfolioTemplateId>(initialTemplateId);
   const [selectedThemeId, setSelectedThemeId] = useState<PortfolioThemeId>(initialThemeId);
@@ -36,13 +50,10 @@ export const PortfolioEngine: React.FC<PortfolioEngineProps> = ({
 
   const [copiedType, setCopiedType] = useState<'public' | 'mobile' | null>(null);
 
-  const usernameSlug = ((data && data.personal && data.personal.fullName) || 'alex-morgan')
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-');
+  const usernameSlug = getPortfolioSlug(data.personal.fullName || 'alex-morgan');
 
-  const publicShareUrl = `https://careerlens.ai/u/${usernameSlug || 'portfolio'}`;
   const localOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+  const publicShareUrl = `${localOrigin}/${usernameSlug || 'portfolio'}/`;
   const mobileLanUrl = `${localOrigin}/#portfolio?template=${selectedTemplateId}&theme=${selectedThemeId}`;
 
   const handleCopyLink = (textToCopy: string, type: 'public' | 'mobile') => {
@@ -532,7 +543,7 @@ export const PortfolioEngine: React.FC<PortfolioEngineProps> = ({
     <div className="space-y-6 animate-fadeIn text-slate-100 font-sans pb-12">
       
       {/* Top Controls Header */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-2xl">
+      {!publicView && <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-2xl">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <span className="px-3 py-1 bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs rounded-full inline-flex items-center gap-1.5 font-mono">
@@ -572,7 +583,7 @@ export const PortfolioEngine: React.FC<PortfolioEngineProps> = ({
 
             {onDownloadPdf && (
               <button
-                onClick={onDownloadPdf}
+                onClick={() => onDownloadPdf('portfolio-preview-document')}
                 className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold rounded-xl text-xs shadow-md transition-all flex items-center gap-1.5"
               >
                 <Download size={14} /> Download PDF
@@ -632,22 +643,43 @@ export const PortfolioEngine: React.FC<PortfolioEngineProps> = ({
             ))}
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Main Portfolio Preview Canvas rendered dynamically using Template & Theme */}
-      <div className={`relative rounded-3xl overflow-hidden border shadow-2xl p-6 sm:p-12 transition-all duration-300 ${currentTheme.bgClass} ${currentTheme.textClass} ${currentTheme.borderClass}`}>
-        {data.personal.profilePhoto && (
-          <img
-            src={data.personal.profilePhoto}
-            alt={`${data.personal.fullName || 'Profile'} profile`}
-            className="absolute top-5 right-5 z-20 w-16 h-16 rounded-full object-cover border-2 border-white/60 shadow-xl"
-          />
-        )}
+      <div id="portfolio-preview-document" className={`relative rounded-3xl overflow-hidden border shadow-2xl p-6 sm:p-12 transition-all duration-300 ${currentTheme.bgClass} ${currentTheme.textClass} ${currentTheme.borderClass}`}>
+        <header className={`mb-10 p-6 sm:p-10 rounded-3xl border ${currentTheme.cardClass} ${currentTheme.borderClass}`}>
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+            <div className="w-32 h-32 sm:w-40 sm:h-40 shrink-0 rounded-3xl border-4 border-white/70 shadow-2xl overflow-hidden bg-slate-800 flex items-center justify-center">
+              {data.personal.profilePhoto ? <img src={data.personal.profilePhoto} alt={`${data.personal.fullName || 'Profile'} profile`} className="w-full h-full object-cover" /> : <UserCheck size={46} className="opacity-60" />}
+            </div>
+            <div className="min-w-0 flex-1 text-center sm:text-left space-y-3">
+              <h1 className="text-4xl sm:text-6xl font-black break-words">{data.personal.fullName || 'Professional Profile'}</h1>
+              <p className={`text-xl font-bold ${currentTheme.accentClass}`}>{data.personal.title || 'Professional'}</p>
+              <div className="flex flex-wrap justify-center sm:justify-start gap-x-4 gap-y-2 text-xs opacity-85 break-words">
+                {[data.personal.email, data.personal.phone, data.personal.address, data.personal.linkedin, data.personal.github, data.personal.portfolio].filter(Boolean).map((value, index) => <span key={`${value}-${index}`}>{value}</span>)}
+              </div>
+              {data.summary && <p className="text-sm leading-relaxed opacity-90">{data.summary}</p>}
+            </div>
+          </div>
+        </header>
         {renderTemplateContent()}
+        <section className="max-w-5xl mx-auto mt-12 space-y-8">
+          {data.education.length > 0 && <PortfolioDataSection title="Education" icon={<GraduationCap size={20} />} theme={currentTheme}>
+            {data.education.map(item => <div key={item.id}><h3 className="font-bold">{item.degree} {item.branch && `- ${item.branch}`}</h3><p className="text-xs opacity-80">{item.institution} {item.startYear && `• ${item.startYear} - ${item.endYear}`}</p></div>)}
+          </PortfolioDataSection>}
+          {data.certifications.length > 0 && <PortfolioDataSection title="Certifications" icon={<Award size={20} />} theme={currentTheme}>
+            {data.certifications.map(item => <div key={item.id}><h3 className="font-bold">{item.title}</h3><p className="text-xs opacity-80">{item.issuer} {item.date && `• ${item.date}`}</p></div>)}
+          </PortfolioDataSection>}
+          {(data.achievements.length > 0 || data.leadershipActivities?.length > 0) && <PortfolioDataSection title="Leadership & Activities" icon={<UserCheck size={20} />} theme={currentTheme}>
+            {[...data.achievements, ...(data.leadershipActivities || [])].map(item => <div key={item.id}><h3 className="font-bold">{item.title}</h3><p className="text-xs opacity-80">{item.description} {item.date && `• ${item.date}`}</p></div>)}
+          </PortfolioDataSection>}
+          {data.languages.length > 0 && <PortfolioDataSection title="Languages" icon={<Globe size={20} />} theme={currentTheme}>{data.languages.map(item => <div key={item.id} className="flex justify-between gap-4"><span>{item.name}</span><span className="text-xs opacity-75">{item.proficiency}</span></div>)}</PortfolioDataSection>}
+          {data.interests.length > 0 && <PortfolioDataSection title="Interests" icon={<Sparkles size={20} />} theme={currentTheme}><p className="text-sm">{data.interests.map(item => item.name).join(' • ')}</p></PortfolioDataSection>}
+        </section>
       </div>
 
       {/* Share Modal */}
-      {shareModalOpen && (
+      {!publicView && shareModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-6">
             <div className="flex items-center justify-between border-b border-slate-800 pb-4">

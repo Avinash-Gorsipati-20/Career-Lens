@@ -1,5 +1,7 @@
 import { PortfolioTemplateDef, PortfolioThemeDef, PortfolioTemplateId, PortfolioThemeId } from '../types/portfolio';
 
+export const getPortfolioSlug = (fullName: string): string => fullName.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-') || 'portfolio';
+
 export const PORTFOLIO_TEMPLATES: PortfolioTemplateDef[] = [
   { id: 'minimal', name: 'Minimalist Grid', description: 'Clean whitespace, elegant typography grid focus', badge: 'Sleek' },
   { id: 'modern', name: 'Modern Dual', description: 'Two-column hero header with modern card layouts', badge: 'Popular' },

@@ -9,6 +9,7 @@ import { ResumePreview } from './components/preview/ResumePreview';
 import { ProgressTracker } from './components/widgets/ProgressTracker';
 import { TemplateSelector } from './components/widgets/TemplateSelector';
 import { PortfolioEngine } from './components/portfolio/PortfolioEngine';
+import { PublicPortfolioView } from './components/portfolio/PublicPortfolioView';
 import { CareerLensAiView } from './components/career/CareerLensAiView';
 import { TargetedResumeView } from './components/targetedResume/TargetedResumeView';
 import { JobOpportunitiesView } from './components/career/JobOpportunitiesView';
@@ -28,8 +29,10 @@ import {
   createDocument,
   deleteDocument,
   getDocument,
-  updateDocument
+  updateDocument,
+  publishPortfolio
 } from './services/documentService';
+import { getPortfolioSlug } from './services/portfolioService';
 import { uploadProfilePhoto } from './services/userProfileService';
 import { storageService } from './services/storageService';
 import { DocumentType, SavedDocument } from './types/documents';
@@ -123,6 +126,7 @@ const MainAppContent: React.FC = () => {
       setIsSaving(true);
       try {
         await updateDocument(user.id, activeDocument.id, currentContent(type));
+        if (type === 'portfolio') await publishPortfolio(user.id, getPortfolioSlug(resumeData.personal.fullName), currentContent(type));
         showNotice('success', `${type === 'resume' ? 'Resume' : 'Portfolio'} saved successfully`);
       } catch (error) {
         console.error('Unable to save document:', error);
@@ -160,6 +164,9 @@ const MainAppContent: React.FC = () => {
       if (nameDialog.type === 'resume' && !nameDialog.contentOverride) {
         // Existing local data is only removed after its cloud save succeeds.
         storageService.clearResumeData();
+      }
+      if (nameDialog.type === 'portfolio') {
+        await publishPortfolio(user.id, getPortfolioSlug(resumeData.personal.fullName), content);
       }
       setNameDialog(null);
       showNotice('success', `${nameDialog.type === 'resume' ? 'Resume' : 'Portfolio'} saved successfully`);
@@ -226,9 +233,10 @@ const MainAppContent: React.FC = () => {
     }
   };
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = (elementId = 'resume-preview-document') => {
     const fileName = `Resume_${(resumeData.personal.fullName || 'builder').replace(/\s+/g, '_')}.pdf`;
-    pdfService.downloadPdf('resume-preview-document', fileName);
+    const portfolioFileName = `Portfolio_${(resumeData.personal.fullName || 'builder').replace(/\s+/g, '_')}.pdf`;
+    pdfService.downloadPdf(elementId, elementId === 'portfolio-preview-document' ? portfolioFileName : fileName);
   };
 
   const themeClasses = theme === 'light'
@@ -296,6 +304,9 @@ const MainAppContent: React.FC = () => {
   );
 };
 
-export const App: React.FC = () => <ThemeProvider><AuthProvider><MainAppContent /></AuthProvider></ThemeProvider>;
+export const App: React.FC = () => {
+  const pathSlug = typeof window !== 'undefined' ? window.location.pathname.match(/^\/([a-z0-9]+(?:-[a-z0-9]+)*)\/?$/i)?.[1] : null;
+  return <ThemeProvider><AuthProvider>{pathSlug && pathSlug !== 'dashboard' ? <PublicPortfolioView slug={pathSlug} /> : <MainAppContent />}</AuthProvider></ThemeProvider>;
+};
 
 export default App;

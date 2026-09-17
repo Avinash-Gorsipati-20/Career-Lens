@@ -8,7 +8,8 @@ import {
   query,
   serverTimestamp,
   updateDoc,
-  where
+  where,
+  setDoc
 } from 'firebase/firestore';
 import { auth, requireFirestore } from './firebase';
 import { CreateDocumentPayload, DocumentType, SavedDocument } from '../types/documents';
@@ -128,4 +129,23 @@ export const deleteDocument = async (userId: string, documentId: string): Promis
   await getDocument(userId, documentId);
   const database = requireFirestore();
   await deleteFirestoreDocument(doc(database, DOCUMENTS_COLLECTION, documentId));
+};
+
+export const publishPortfolio = async (
+  userId: string,
+  slug: string,
+  content: Record<string, unknown>
+): Promise<void> => {
+  requireDocumentOwner(userId);
+  await setDoc(doc(requireFirestore(), 'publicPortfolios', slug), {
+    userId,
+    username: slug,
+    content: removeUndefined(content),
+    updatedAt: serverTimestamp()
+  });
+};
+
+export const getPublicPortfolio = async (slug: string): Promise<Record<string, any> | null> => {
+  const snapshot = await getDoc(doc(requireFirestore(), 'publicPortfolios', slug));
+  return snapshot.exists() ? snapshot.data() as Record<string, any> : null;
 };
