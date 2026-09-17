@@ -1,0 +1,38 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.uid == userId
+        && request.resource.data.keys().hasOnly(['uid', 'fullName', 'email', 'photoUrl', 'createdAt', 'updatedAt']);
+      allow update: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.uid == userId
+        && request.resource.data.keys().hasOnly(['uid', 'fullName', 'email', 'photoUrl', 'createdAt', 'updatedAt'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fullName', 'email', 'photoUrl', 'updatedAt']);
+      allow delete: if signedIn() && request.auth.uid == userId;
+    }
+
+    match /documents/{documentId} {
+      allow read: if signedIn() && resource.data.userId == request.auth.uid;
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.type in ['resume', 'portfolio']
+        && request.resource.data.keys().hasOnly(['userId', 'type', 'name', 'content', 'createdAt', 'updatedAt']);
+      allow update: if signedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.type == resource.data.type
+        && request.resource.data.keys().hasOnly(['userId', 'type', 'name', 'content', 'createdAt', 'updatedAt'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'content', 'updatedAt']);
+      allow delete: if signedIn() && resource.data.userId == request.auth.uid;
+    }
+  }
+}

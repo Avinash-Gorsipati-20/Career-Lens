@@ -1,0 +1,326 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-100 font-sans antialiased selection:bg-cyan-500 selection:text-slate-950;
+  }
+}
+
+/* Keyframe Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+/* Print specific styles for 1:1 vector print output */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  
+  header, nav, button, .no-print, [role="tooltip"] {
+    display: none !important;
+  }
+
+  #resume-preview-document {
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    transform: scale(1) !important;
+  }
+}
+
+/* Custom scrollbar – dark default */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(51, 65, 85, 0.8);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(71, 85, 105, 1);
+}
+
+/* ==========================================================================
+   PROFESSIONAL LIGHT THEME
+   Strategy: Override every meaningful background / text / border combination
+   used in the JSX with high-specificity !important rules.
+   We target:
+     • Tailwind solid utilities:  .bg-slate-950  .bg-slate-900  .bg-slate-800
+     • Tailwind alpha utilities:  bg-slate-950/80  → Tailwind writes these as
+       an inline --tw-bg-opacity var, so the class is still  "bg-slate-950/80"
+       in the DOM and [class*="bg-slate-950\/"] matches it.
+     • Gradient utilities:        from-slate-900  via-blue-950/50  etc.
+   ========================================================================== */
+
+/* ── Light Theme ─────────────────────────────────────────────────────────── */
+
+html.theme-light {
+  color-scheme: light;
+}
+
+html.theme-light body {
+  background-color: #f0f4f8 !important;
+  color: #0f172a !important;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+html.theme-light ::-webkit-scrollbar-track { background: #e2e8f0; }
+html.theme-light ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+html.theme-light ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+html.theme-light header {
+  background-color: #ffffff !important;
+  border-bottom-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06) !important;
+}
+
+/* ── Primary surface: solid bg-slate-900 (no opacity suffix) ────────────── */
+html.theme-light .bg-slate-900 {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.07);
+}
+
+/* ── bg-slate-900 WITH opacity modifiers (e.g. bg-slate-900/80) ──────────── */
+/* In the browser DOM the class literally includes the '/' character         */
+html.theme-light [class*="bg-slate-900/"] {
+  background-color: #ffffff !important;
+  --tw-bg-opacity: 1 !important;
+  box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.06);
+}
+
+/* ── Recessed: bg-slate-950 and bg-slate-800 (solid + opacity variants) ─── */
+html.theme-light .bg-slate-950,
+html.theme-light .bg-slate-800 {
+  background-color: #f1f5f9 !important;
+}
+html.theme-light [class*="bg-slate-950/"],
+html.theme-light [class*="bg-slate-800/"],
+html.theme-light [class*="bg-blue-950/"] {
+  background-color: #f1f5f9 !important;
+  --tw-bg-opacity: 1 !important;
+}
+
+/* ── Navigation pill track ───────────────────────────────────────────────── */
+html.theme-light nav {
+  background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+}
+html.theme-light nav button:not([class*="bg-blue"]) {
+  color: #475569 !important;
+}
+html.theme-light nav button:not([class*="bg-blue"]):hover {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* ── Gradient hero banners ────────────────────────────────────────────────── */
+html.theme-light [class*="from-slate-9"] {
+  background: linear-gradient(135deg, #f8faff 0%, #edf2fd 50%, #f0f4f8 100%) !important;
+  border-color: #dde5f0 !important;
+}
+
+/* ── Borders ─────────────────────────────────────────────────────────────── */
+html.theme-light [class*="border-slate-8"],
+html.theme-light [class*="border-slate-7"] {
+  border-color: #e2e8f0 !important;
+}
+
+/* ── Typography ──────────────────────────────────────────────────────────── */
+html.theme-light h1,
+html.theme-light h2,
+html.theme-light h3,
+html.theme-light h4,
+html.theme-light h5,
+html.theme-light h6 {
+  color: #0f172a !important;
+}
+html.theme-light .text-white         { color: #0f172a !important; }
+html.theme-light .text-slate-100     { color: #0f172a !important; }
+html.theme-light .text-slate-200     { color: #1e293b !important; }
+html.theme-light .text-slate-300     { color: #334155 !important; }
+html.theme-light .text-slate-400     { color: #475569 !important; }
+html.theme-light .text-slate-500     { color: #64748b !important; }
+
+/* ── Inputs / Textareas / Selects ────────────────────────────────────────── */
+html.theme-light input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="submit"]),
+html.theme-light textarea,
+html.theme-light select {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04) !important;
+}
+html.theme-light input::placeholder,
+html.theme-light textarea::placeholder {
+  color: #94a3b8 !important;
+}
+html.theme-light input:focus,
+html.theme-light textarea:focus,
+html.theme-light select:focus {
+  background-color: #ffffff !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+  outline: none !important;
+}
+
+/* ── Buttons – generic dark-surface → light pill ─────────────────────────── */
+html.theme-light button[class*="bg-slate-950"],
+html.theme-light button[class*="bg-slate-800"] {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #334155 !important;
+}
+html.theme-light button[class*="bg-slate-950"]:hover,
+html.theme-light button[class*="bg-slate-800"]:hover {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* ── Primary blue buttons – preserve white text ─────────────────────────── */
+html.theme-light button[class*="bg-blue-6"],
+html.theme-light a[class*="bg-blue-6"] {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+html.theme-light button[class*="bg-blue-6"]:hover {
+  background-color: #1d4ed8 !important;
+}
+html.theme-light button[class*="bg-blue-6"] *,
+html.theme-light a[class*="bg-blue-6"] * {
+  color: #ffffff !important;
+}
+
+/* ── Tinted chip backgrounds ─────────────────────────────────────────────── */
+html.theme-light [class*="bg-blue-6"][class*="\/10"],
+html.theme-light [class*="bg-blue-5"][class*="\/10"] { background-color: #eff6ff !important; }
+html.theme-light [class*="bg-cyan-5"][class*="\/10"]  { background-color: #ecfeff !important; }
+html.theme-light [class*="bg-amber-5"][class*="\/"]   { background-color: #fffbeb !important; }
+html.theme-light [class*="bg-emerald-5"][class*="\/"] { background-color: #ecfdf5 !important; }
+html.theme-light [class*="bg-rose-5"][class*="\/"]    { background-color: #fff1f2 !important; }
+html.theme-light [class*="bg-purple-5"][class*="\/"]  { background-color: #faf5ff !important; }
+
+/* ── Resume Preview Stage ────────────────────────────────────────────────── */
+html.theme-light div:has(> div > #resume-preview-document) {
+  background-color: #dde5f0 !important;
+}
+html.theme-light div:has(> div > #resume-preview-document) > div:first-child {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* ==========================================================================
+   WARM EYE PROTECTION THEME
+   Warm sepia / cream palette for extended reading comfort.
+   ========================================================================== */
+
+html.theme-eye-protection {
+  color-scheme: light;
+}
+
+html.theme-eye-protection body {
+  background-color: #faf6ed !important;
+  color: #2c2317 !important;
+}
+
+html.theme-eye-protection ::-webkit-scrollbar-track { background: #ede8dc; }
+html.theme-eye-protection ::-webkit-scrollbar-thumb { background: #c4b79a; border-radius: 4px; }
+html.theme-eye-protection ::-webkit-scrollbar-thumb:hover { background: #a8977d; }
+
+html.theme-eye-protection header {
+  background-color: rgba(251, 247, 238, 0.97) !important;
+  border-bottom-color: #e7decb !important;
+  box-shadow: 0 1px 3px 0 rgba(80, 60, 30, 0.08) !important;
+}
+
+html.theme-eye-protection nav,
+html.theme-eye-protection .bg-slate-950,
+html.theme-eye-protection [class~="bg-slate-950"] {
+  background-color: #f3ecdf !important;
+  border-color: #e7decb !important;
+}
+
+html.theme-eye-protection nav button:not(.bg-blue-600):not([class*="bg-blue-"]) {
+  color: #6b5c49 !important;
+}
+html.theme-eye-protection nav button:not(.bg-blue-600):not([class*="bg-blue-"]):hover {
+  background-color: #e9e0cf !important;
+  color: #2c2317 !important;
+}
+
+html.theme-eye-protection .bg-slate-900 {
+  background-color: #fffefb !important;
+  box-shadow: 0 1px 4px 0 rgba(80, 60, 30, 0.07);
+}
+
+html.theme-eye-protection .bg-slate-800,
+html.theme-eye-protection [class*="bg-slate-950\/"],
+html.theme-eye-protection [class*="bg-slate-900\/"],
+html.theme-eye-protection [class*="bg-slate-800\/"],
+html.theme-eye-protection [class*="bg-blue-950\/"] {
+  background-color: #f3ecdf !important;
+  --tw-bg-opacity: 1 !important;
+}
+
+html.theme-eye-protection [class*="from-slate-9"],
+html.theme-eye-protection [class*="via-blue-950"] {
+  background: linear-gradient(135deg, #fffefb 0%, #f7efe2 50%, #faf6ed 100%) !important;
+  border-color: #e7decb !important;
+}
+
+html.theme-eye-protection .border-slate-800,
+html.theme-eye-protection .border-slate-700,
+html.theme-eye-protection [class*="border-slate-8"],
+html.theme-eye-protection [class*="border-slate-7"] {
+  border-color: #e7decb !important;
+}
+
+html.theme-eye-protection h1,
+html.theme-eye-protection h2,
+html.theme-eye-protection h3,
+html.theme-eye-protection h4,
+html.theme-eye-protection .text-white,
+html.theme-eye-protection .text-slate-100 { color: #2c2317 !important; }
+html.theme-eye-protection .text-slate-200  { color: #423625 !important; }
+html.theme-eye-protection .text-slate-300  { color: #5e4f3a !important; }
+html.theme-eye-protection .text-slate-400  { color: #7b6a55 !important; }
+html.theme-eye-protection .text-slate-500  { color: #9e8870 !important; }
+
+html.theme-eye-protection input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="submit"]),
+html.theme-eye-protection textarea,
+html.theme-eye-protection select {
+  background-color: #fffefb !important;
+  border-color: #dfd3bd !important;
+  color: #2c2317 !important;
+}
+
+html.theme-eye-protection button.bg-slate-950,
+html.theme-eye-protection button.bg-slate-800,
+html.theme-eye-protection button[class*="bg-slate-950"],
+html.theme-eye-protection button[class*="bg-slate-800"] {
+  background-color: #f3ecdf !important;
+  border-color: #e0d5c0 !important;
+  color: #5e4f3a !important;
+}
+html.theme-eye-protection button.bg-slate-950:hover,
+html.theme-eye-protection button.bg-slate-800:hover,
+html.theme-eye-protection button[class*="bg-slate-950"]:hover,
+html.theme-eye-protection button[class*="bg-slate-800"]:hover {
+  background-color: #e9e0cf !important;
+  color: #2c2317 !important;
+}
