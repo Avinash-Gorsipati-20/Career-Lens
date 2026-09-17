@@ -8,7 +8,9 @@ export interface ParseResult {
 }
 
 export const parseResumeText = (text: string): ParseResult => {
-  const lines = text
+  const headingPattern = /(Professional Summary|Summary|Profile|About Me|Objective|Technical Skills|Core Competencies|Skills|Technologies|Expertise|Professional Experience|Work Experience|Experience|Work History|Employment|Academic Background|Education|Qualifications|Personal Projects|Academic Projects|Key Technical Projects|Projects|Certifications|Certificates|Achievements|Awards|Honors|Leadership and Activities|Leadership & Activities|Leadership|Activities|Volunteering|Volunteer Experience|Extracurricular Activities|Languages|Language Proficiency|Interests|Hobbies)/gi;
+  const normalizedText = text.replace(headingPattern, '\n$1\n');
+  const lines = normalizedText
     .replace(/\r/g, '\n')
     .split('\n')
     .map(line => line.replace(/[ \t]+/g, ' ').trim())
