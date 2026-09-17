@@ -41,8 +41,6 @@ export const ResumeImportModal: React.FC<ResumeImportModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropzoneRef = useRef<HTMLDivElement>(null);
 
-  if (!isOpen) return null;
-
   const resetAll = () => {
     setParseResult(null);
     setSelectedFile(null);
@@ -134,6 +132,8 @@ export const ResumeImportModal: React.FC<ResumeImportModalProps> = ({
     e.preventDefault();
     setIsDragOver(false);
   }, []);
+
+  if (!isOpen) return null;
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
