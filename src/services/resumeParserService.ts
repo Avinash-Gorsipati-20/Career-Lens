@@ -8,7 +8,11 @@ export interface ParseResult {
 }
 
 export const parseResumeText = (text: string): ParseResult => {
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const lines = text
+    .replace(/\r/g, '\n')
+    .split('\n')
+    .map(line => line.replace(/[ \t]+/g, ' ').trim())
+    .filter(Boolean);
   const warnings: string[] = [];
 
   const parsedData: ResumeData = {
@@ -55,20 +59,36 @@ export const parseResumeText = (text: string): ParseResult => {
   const githubMatch = text.match(/(https?:\/\/)?(www\.)?github\.com\/[a-zA-Z0-9_-]+/i);
   if (githubMatch) parsedData.personal.github = githubMatch[0];
 
-  // Extract Name from top lines
-  if (lines.length > 0) {
-    const potentialName = lines[0].replace(/[^a-zA-Z\s]/g, '');
-    if (potentialName.length >= 2 && potentialName.length <= 40) {
-      parsedData.personal.fullName = potentialName;
-    }
-  }
+  const cleanLine = (line: string) => line.replace(/^[•●▪▸\-*]+\s*/, '').trim();
+  const isBullet = (line: string) => /^[•●▪▸\-*]/.test(line);
+  const sectionFor = (line: string): string | null => {
+    const normalized = line.toLowerCase().replace(/[&:|]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (/^(summary|professional summary|profile|about me|objective)$/.test(normalized)) return 'summary';
+    if (/^(skills?|technical skills|core competencies|technologies|expertise)$/.test(normalized)) return 'skills';
+    if (/^(experience|professional experience|work experience|work history|employment)$/.test(normalized)) return 'experience';
+    if (/^(education|academic background|qualifications)$/.test(normalized)) return 'education';
+    if (/^(projects?|personal projects|academic projects|key technical projects)$/.test(normalized)) return 'projects';
+    if (/^(certifications?|certificates?)$/.test(normalized)) return 'certifications';
+    if (/^(achievements?|awards?|honors?)$/.test(normalized)) return 'achievements';
+    if (/^(leadership activities|leadership|activities|volunteering|volunteer experience|extracurricular activities)$/.test(normalized)) return 'leadership';
+    if (/^(languages?|language proficiency)$/.test(normalized)) return 'languages';
+    if (/^(interests?|hobbies?)$/.test(normalized)) return 'interests';
+    return null;
+  };
 
-  if (lines.length > 1 && !lines[1].includes('@') && !lines[1].includes('http')) {
-    parsedData.personal.title = lines[1];
-  }
+  const topLines = lines.slice(0, 8);
+  const nameLine = topLines.find(line =>
+    !line.includes('@') && !/https?:\/\//i.test(line) && !/\d{5,}/.test(line) && /^[a-zA-Z][a-zA-Z .'-]{1,40}$/.test(line)
+  );
+  if (nameLine) parsedData.personal.fullName = nameLine;
+  const titleLine = topLines.find(line => /engineer|developer|designer|analyst|student|manager|intern|specialist|architect/i.test(line) && line !== nameLine);
+  if (titleLine) parsedData.personal.title = titleLine;
+  else if (topLines[1] && topLines[1] !== nameLine && !topLines[1].includes('@')) parsedData.personal.title = cleanLine(topLines[1]);
+  const addressMatch = text.match(/(?:address|location)\s*[:|-]?\s*([^\n]+)/i);
+  if (addressMatch) parsedData.personal.address = addressMatch[1].trim();
+  const portfolioMatch = text.match(/(?:https?:\/\/)?(?:www\.)?[a-z0-9-]+\.(?:com|dev|me|io)(?:\/[a-z0-9_./-]*)?/i);
+  if (portfolioMatch && !/linkedin|github/i.test(portfolioMatch[0])) parsedData.personal.portfolio = portfolioMatch[0];
 
-  // Section parsing heuristics
-  let currentSection = '';
   const skillsList: string[] = [];
   const expList: Experience[] = [];
   const eduList: Education[] = [];
@@ -79,91 +99,45 @@ export const parseResumeText = (text: string): ParseResult => {
   const languageList: Language[] = [];
   const interestList: Interest[] = [];
 
-  lines.forEach((line, index) => {
-    const lower = line.toLowerCase();
-    
-    if (lower.includes('leadership') || lower.includes('activities') || lower.includes('volunteer') || lower.includes('extracurricular')) {
-      currentSection = 'leadership';
-      return;
-    } else if (lower.includes('certification') || lower.includes('certificate')) {
-      currentSection = 'certifications';
-      return;
-    } else if (lower.includes('achievement') || lower.includes('award') || lower.includes('honor')) {
-      currentSection = 'achievements';
-      return;
-    } else if (lower.includes('language')) {
-      currentSection = 'languages';
-      return;
-    } else if (lower.includes('interest') || lower.includes('hobbies')) {
-      currentSection = 'interests';
-      return;
-    } else if (lower.includes('experience') || lower.includes('work history') || lower.includes('employment')) {
-      currentSection = 'experience';
-      return;
-    } else if (lower.includes('education') || lower.includes('academic')) {
-      currentSection = 'education';
-      return;
-    } else if (lower.includes('skill') || lower.includes('technologies') || lower.includes('expertise')) {
-      currentSection = 'skills';
-      return;
-    } else if (lower.includes('summary') || lower.includes('about me') || lower.includes('profile')) {
-      currentSection = 'summary';
-      return;
-    } else if (lower.includes('project')) {
-      currentSection = 'projects';
-      return;
-    }
-
-    if (currentSection === 'summary' && line.length > 20 && !parsedData.summary) {
-      parsedData.summary = line;
-    } else if (currentSection === 'skills') {
-      const tokens = line.split(/[,|•·]/).map(t => t.trim()).filter(t => t.length > 1 && t.length < 30);
-      tokens.forEach(tok => {
-        if (!skillsList.includes(tok)) skillsList.push(tok);
-      });
-    } else if (currentSection === 'experience' && line.length > 5) {
-      if (line.includes('Company') || line.includes('Inc') || line.includes('Tech') || line.includes('Solutions') || line.includes('Role') || line.includes('Engineer') || line.includes('Developer')) {
-        expList.push({
-          id: `exp-${Date.now()}-${index}`,
-          company: line.split(/[-|]/)[0] || line,
-          role: line.split(/[-|]/)[1] || 'Software Engineer',
-          duration: '2022 - Present',
-          description: line
-        });
-      }
-    } else if (currentSection === 'projects' && line.length > 4) {
-      projectList.push({
-        id: `project-${Date.now()}-${index}`,
-        name: line.split(/[-:|]/)[0].trim(),
-        description: line,
-        technologies: line.match(/\b(React|Angular|Vue|Node\.js|Python|Java|TypeScript|JavaScript|SQL|AWS|Docker|Firebase|MongoDB|PostgreSQL|TensorFlow|PyTorch)\b/gi) || [],
-        githubLink: '',
-        liveDemo: ''
-      });
-    } else if (currentSection === 'certifications' && line.length > 4) {
-      certificationList.push({ id: `cert-${Date.now()}-${index}`, title: line, issuer: '', date: '' });
-    } else if (currentSection === 'achievements' && line.length > 4) {
-      achievementList.push({ id: `ach-${Date.now()}-${index}`, title: line, description: '', date: '' });
-    } else if (currentSection === 'leadership' && line.length > 4) {
-      leadershipList.push({ id: `lead-${Date.now()}-${index}`, title: line, description: '', date: '' });
-    } else if (currentSection === 'languages' && line.length > 1) {
-      languageList.push({ id: `lang-${Date.now()}-${index}`, name: line, proficiency: 'Professional' });
-    } else if (currentSection === 'interests' && line.length > 1) {
-      interestList.push({ id: `interest-${Date.now()}-${index}`, name: line });
-    } else if (currentSection === 'education' && line.length > 5) {
-      if (line.includes('University') || line.includes('College') || line.includes('Institute') || line.includes('Bachelor') || line.includes('Master') || line.includes('B.S.') || line.includes('B.Tech')) {
-        eduList.push({
-          id: `edu-${Date.now()}-${index}`,
-          institution: line,
-          degree: line.includes('Master') ? 'Master of Science' : 'Bachelor of Science',
-          branch: 'Computer Science',
-          cgpa: '3.8',
-          startYear: '2019',
-          endYear: '2023'
-        });
-      }
+  let currentSection = '';
+  const sections: Record<string, string[]> = {};
+  lines.forEach(line => {
+    const section = sectionFor(line);
+    if (section) {
+      currentSection = section;
+      sections[currentSection] ||= [];
+    } else if (currentSection) {
+      sections[currentSection].push(line);
     }
   });
+
+  const splitTokens = (values: string[]) => values.flatMap(line => cleanLine(line).split(/[,|•·;:]/)).map(value => value.trim()).filter(value => value.length > 1 && value.length < 50);
+  splitTokens(sections.skills || []).forEach(skill => { if (!skillsList.some(existing => existing.toLowerCase() === skill.toLowerCase())) skillsList.push(skill); });
+  const technologies = (value: string) => value.match(/\b(React(?:\.js)?|Angular|Vue(?:\.js)?|Node\.js|Python|Java|C\+\+|TypeScript|JavaScript|SQL|AWS|Docker|Firebase|MongoDB|PostgreSQL|TensorFlow|PyTorch|HTML5?|CSS3?|Git|Figma|Kubernetes|Spring Boot)\b/gi) || [];
+  const entries = (values: string[]) => {
+    const result: { title: string; description: string; date: string }[] = [];
+    values.forEach(line => {
+      const value = cleanLine(line);
+      const date = value.match(/\b(?:[A-Za-z]+\s+)?(?:19|20)\d{2}\s*(?:-|–|to)\s*(?:[A-Za-z]+\s+)?(?:(?:19|20)\d{2}|present|current)\b/i)?.[0] || '';
+      if (isBullet(line) && result.length) result[result.length - 1].description += ` ${value}`;
+      else result.push({ title: value.replace(date, '').replace(/\s{2,}/g, ' ').trim(), description: isBullet(line) ? value : '', date });
+    });
+    return result;
+  };
+  entries(sections.projects || []).forEach((entry, index) => projectList.push({ id: `project-${index}`, name: entry.title, description: entry.description || entry.title, technologies: technologies(`${entry.title} ${entry.description}`), githubLink: '', liveDemo: '' }));
+  entries(sections.experience || []).forEach((entry, index) => expList.push({ id: `exp-${index}`, company: entry.title.split(/\s+-\s+|\|/)[0].trim(), role: entry.title.split(/\s+-\s+|\|/)[1]?.trim() || entry.title, duration: entry.date || 'Present', description: entry.description || entry.title }));
+  entries(sections.education || []).forEach((entry, index) => eduList.push({ id: `edu-${index}`, institution: entry.title, degree: /master|m\.tech|m\.sc/i.test(entry.title) ? 'Master of Science' : 'Bachelor of Science', branch: /computer|engineering|science/i.test(entry.title) ? 'Computer Science' : '', cgpa: entry.title.match(/(?:cgpa|gpa)\s*[:=-]?\s*([\d.]+)/i)?.[1] || '', startYear: entry.date.split(/-|–|to/)[0]?.trim() || '', endYear: entry.date.split(/-|–|to/)[1]?.trim() || '' }));
+  entries(sections.certifications || []).forEach((entry, index) => certificationList.push({ id: `cert-${index}`, title: entry.title, issuer: '', date: entry.date }));
+  entries(sections.achievements || []).forEach((entry, index) => achievementList.push({ id: `ach-${index}`, title: entry.title, description: entry.description, date: entry.date }));
+  entries(sections.leadership || []).forEach((entry, index) => leadershipList.push({ id: `lead-${index}`, title: entry.title, description: entry.description, date: entry.date }));
+  splitTokens(sections.languages || []).forEach((language, index) => languageList.push({ id: `lang-${index}`, name: language.replace(/\s*[-:|].*$/, ''), proficiency: /native/i.test(language) ? 'Native' : /fluent/i.test(language) ? 'Fluent' : 'Professional' }));
+  splitTokens(sections.interests || []).forEach((interest, index) => interestList.push({ id: `interest-${index}`, name: interest }));
+  parsedData.summary = (sections.summary || []).filter(line => !isBullet(line)).join(' ').trim();
+  if (!parsedData.summary) {
+    const firstSectionIndex = lines.findIndex(line => sectionFor(line) !== null);
+    const summaryLines = firstSectionIndex > 1 ? lines.slice(nameLine ? lines.indexOf(nameLine) + 1 : 1, firstSectionIndex) : [];
+    parsedData.summary = summaryLines.filter(line => !line.includes('@') && !/https?:\/\//i.test(line)).join(' ').trim();
+  }
 
   if (skillsList.length > 0) {
     parsedData.skills = skillsList.slice(0, 15).map((sk, idx) => ({

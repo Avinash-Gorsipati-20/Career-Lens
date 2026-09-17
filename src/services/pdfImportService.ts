@@ -43,9 +43,18 @@ const extractTextFromPdf = async (
     onProgress?.(5 + Math.floor(((i - 1) / numPages) * 40), `Extracting text from page ${i} of ${numPages}`);
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
+    let previousY: number | null = null;
     const pageText = content.items
-      .map((item: any) => item.str || '')
-      .join(' ')
+      .map((item: any) => {
+        const value = String(item.str || '').trim();
+        const y = Number(item.transform?.[5]);
+        const startsNewLine = previousY !== null && Number.isFinite(y) && Math.abs(y - previousY) > 3;
+        if (Number.isFinite(y)) previousY = y;
+        return `${startsNewLine ? '\n' : ' '}${value}`;
+      })
+      .join('')
+      .replace(/[ \t]+\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
       .trim();
     pageTexts.push(pageText);
   }
